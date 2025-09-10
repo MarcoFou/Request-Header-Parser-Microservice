@@ -1,30 +1,38 @@
-// index.js
-// where your node app starts
+// server.js
+const express = require('express');
+const path = require('path');
 
-// init project
-require('dotenv').config();
-var express = require('express');
-var app = express();
+const app = express();
 
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC
-var cors = require('cors');
-app.use(cors({ optionsSuccessStatus: 200 })); // some legacy browsers choke on 204
+// servir archivos estáticos en /public
+app.use(express.static(path.join(__dirname, 'public')));
 
-// http://expressjs.com/en/starter/static-files.html
-app.use(express.static('public'));
+// endpoint API requerido por FreeCodeCamp
+app.get('/api/whoami', (req, res) => {
+  // IP: preferir X-Forwarded-For (proxies) y fallback a req.ip
+  const forwarded = req.headers['x-forwarded-for'];
+  const ipaddress = (forwarded ? forwarded.split(',')[0] : req.ip).replace('::ffff:', '');
 
-// http://expressjs.com/en/starter/basic-routing.html
-app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/views/index.html');
+  // lenguaje
+  const language = (req.headers['accept-language'] || '').split(',')[0];
+
+  // software: extraer lo que está entre paréntesis en User-Agent si existe, si no devolver todo
+  const ua = req.headers['user-agent'] || '';
+  const parenMatch = ua.match(/\(([^)]+)\)/);
+  const software = parenMatch ? parenMatch[1] : ua;
+
+  res.json({
+    ipaddress,
+    language,
+    software
+  });
 });
 
-// your first API endpoint...
-app.get('/api/hello', function (req, res) {
-  res.json({ greeting: 'hello API' });
+// root: enviar index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// listen for requests :)
-var listener = app.listen(process.env.PORT || 3000, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
-});
+// puerto
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
