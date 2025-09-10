@@ -1,24 +1,33 @@
 const express = require('express');
-const path = require('path');
+var app = express();
 
-const app = express();
+// Enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
+// So that API is remotely testable by FCC 
+var cors = require('cors');
+app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
 
-// servir estáticos
-app.use(express.static(path.join(__dirname, 'public')));
+// Change the proxy settings to allow the IP to be accessed
+app.set('trust proxy', true);
 
-// endpoint raíz
+// Mount the middleware to serve the styles sheet in the public folder
+app.use("/public", express.static(__dirname + "/public"));
+
+// Display the index page for GET requests to the root path
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(__dirname + "/views/index.html");
 });
 
-// endpoint API obligatorio
 app.get('/api/whoami', (req, res) => {
-  res.json({
-    ipaddress: req.ip,                      // ip
-    language: req.headers['accept-language'], // idioma
-    software: req.headers['user-agent']       // user-agent completo
-  });
+    res.send({
+        "ipaddress": req.ip,
+        "language": req.headers["accept-language"],
+        "software": req.headers["user-agent"]
+    });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Get the port or assign it to 3000 if there is none 
+var port = process.env.PORT || 3000;
+
+//server.listen(port, "::1");
+
+app.listen(port, () => console.log(`Node is listening on port ${port}...`));
