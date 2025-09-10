@@ -1,38 +1,24 @@
-// server.js
 const express = require('express');
 const path = require('path');
 
 const app = express();
 
-// servir archivos estáticos en /public
+// servir estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
-// endpoint API requerido por FreeCodeCamp
-app.get('/api/whoami', (req, res) => {
-  // IP: preferir X-Forwarded-For (proxies) y fallback a req.ip
-  const forwarded = req.headers['x-forwarded-for'];
-  const ipaddress = (forwarded ? forwarded.split(',')[0] : req.ip).replace('::ffff:', '');
-
-  // lenguaje
-  const language = (req.headers['accept-language'] || '').split(',')[0];
-
-  // software: extraer lo que está entre paréntesis en User-Agent si existe, si no devolver todo
-  const ua = req.headers['user-agent'] || '';
-  const parenMatch = ua.match(/\(([^)]+)\)/);
-  const software = parenMatch ? parenMatch[1] : ua;
-
-  res.json({
-    ipaddress,
-    language,
-    software
-  });
-});
-
-// root: enviar index.html
+// endpoint raíz
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// puerto
+// endpoint API obligatorio
+app.get('/api/whoami', (req, res) => {
+  res.json({
+    ipaddress: req.ip,                      // ip
+    language: req.headers['accept-language'], // idioma
+    software: req.headers['user-agent']       // user-agent completo
+  });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
